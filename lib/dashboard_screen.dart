@@ -1,40 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'campus_events_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final userEmail = FirebaseAuth.instance.currentUser?.email ?? '';
-
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Welcome 🎉',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              userEmail,
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 30),
+      body: GridView.count(
+        crossAxisCount: 2,
+        padding: const EdgeInsets.all(12),
+        children: [
+          const Card(child: Center(child: Text('Student Dashboard'))),
+          const Card(child: Center(child: Text("Today's Classes"))),
+          const Card(child: Center(child: Text('Academic Calendar'))),
+          const Card(child: Center(child: Text('Reminders'))),
 
-            // Logout already works — no change needed
-            ElevatedButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.pushReplacementNamed(context, '/login');
-              },
-              child: const Text('Logout'),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>  CampusEventsScreen(),
+                ),
+              );
+            },
+            child: const Card(
+              child: Center(child: Text('Campus Events')),
             ),
-          ],
-        ),
+          ),
+
+          const Card(child: Center(child: Text('Emergency Info'))),
+        ],
       ),
     );
   }

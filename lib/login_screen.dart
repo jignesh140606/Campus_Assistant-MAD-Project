@@ -1,86 +1,88 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'home_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+import 'register_screen.dart';
+
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
-  // 🔹 STEP 5.4 + STEP 7.2: Login Logic + Save Session
-  Future<void> loginUser(
-      BuildContext context, String email, String password) async {
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
-      // 🔹 STEP 7.2: Save login state
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setBool('isLoggedIn', true);
+class _LoginScreenState extends State<LoginScreen> {
+  final email = TextEditingController();
+  final password = TextEditingController();
 
-      // Navigate to Home Screen after successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
-    } on FirebaseAuthException catch (e) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Login Failed'),
-          content: Text(e.message ?? 'Invalid credentials'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
-  }
+  String? errorMessage; // ✅ added
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
-              controller: emailController,
+              controller: email,
               decoration: const InputDecoration(labelText: 'Email'),
-              keyboardType: TextInputType.emailAddress,
             ),
             TextField(
-              controller: passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
+              controller: password,
               obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
             ),
-            const SizedBox(height: 20),
 
-            // 🔹 STEP 5.4: Call loginUser()
+            const SizedBox(height: 10),
+
+            // ✅ ERROR MESSAGE UI (added)
+            if (errorMessage != null)
+              Text(
+                errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
+
+            const SizedBox(height: 10),
+
             ElevatedButton(
-              onPressed: () {
-                loginUser(
-                  context,
-                  emailController.text.trim(),
-                  passwordController.text.trim(),
-                );
+              onPressed: () async {
+                setState(() {
+                  errorMessage = null; // reset
+                });
+
+                try {
+                  await FirebaseAuth.instance.signInWithEmailAndPassword(
+                    email: email.text.trim(),
+                    password: password.text.trim(),
+                  );
+                } on FirebaseAuthException catch (e) {
+                  setState(() {
+                    if (e.code == 'user-not-found') {
+                      errorMessage = 'No user found with this email';
+                    } else if (e.code == 'wrong-password') {
+                      errorMessage = 'Incorrect password';
+                    } else if (e.code == 'invalid-email') {
+                      errorMessage = 'Invalid email format';
+                    } else {
+                      errorMessage = e.message;
+                    }
+                  });
+                }
               },
               child: const Text('Login'),
             ),
 
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/register');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const RegisterScreen(),
+                  ),
+                );
               },
-              child: const Text('Create Account'),
+              child: const Text('New user? Register'),
             ),
           ],
         ),
