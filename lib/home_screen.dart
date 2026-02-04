@@ -7,9 +7,20 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(
-        child: Text(
-          'Welcome to Campus Assistant',
-          style: TextStyle(fontSize: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Welcome to Campus Assistant',
+              style: TextStyle(fontSize: 20),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Go to Dashboard for information and access feature of our app',
+              style: TextStyle(fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
