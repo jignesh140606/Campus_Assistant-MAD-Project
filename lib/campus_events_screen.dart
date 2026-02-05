@@ -11,34 +11,25 @@ class CampusEventsScreen extends StatelessWidget {
 
   /* ---------------- CREATE ---------------- */
   Future<void> addEvent(BuildContext context) async {
-    try {
-      await FirebaseFirestore.instance.collection('events').add({
-        'title': titleController.text,
-        'description': descController.text,
-        'date': dateController.text,
-        'location': locationController.text,
-        'createdAt': Timestamp.now(),
-      });
+    await FirebaseFirestore.instance.collection('events').add({
+      'title': titleController.text,
+      'description': descController.text,
+      'date': dateController.text,
+      'location': locationController.text,
+      'createdAt': Timestamp.now(),
+    });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Event added successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ Event added successfully'),
+        backgroundColor: Colors.green,
+      ),
+    );
 
-      titleController.clear();
-      descController.clear();
-      dateController.clear();
-      locationController.clear();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('❌ Failed to add event'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    titleController.clear();
+    descController.clear();
+    dateController.clear();
+    locationController.clear();
   }
 
   /* ---------------- READ ---------------- */
@@ -50,15 +41,19 @@ class CampusEventsScreen extends StatelessWidget {
   }
 
   /* ---------------- UPDATE ---------------- */
-  Future<void> updateEvent(BuildContext context, String docId) async {
-    await FirebaseFirestore.instance.collection('events').doc(docId).update({
+  Future<void> updateEvent(
+      BuildContext context, String docId) async {
+    await FirebaseFirestore.instance
+        .collection('events')
+        .doc(docId)
+        .update({
       'title': titleController.text,
       'description': descController.text,
       'date': dateController.text,
       'location': locationController.text,
     });
 
-    Navigator.pop(context); // close dialog
+    Navigator.pop(context);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -74,8 +69,21 @@ class CampusEventsScreen extends StatelessWidget {
   }
 
   /* ---------------- DELETE ---------------- */
-  Future<void> deleteEvent(String docId) async {
-    await FirebaseFirestore.instance.collection('events').doc(docId).delete();
+  Future<void> deleteEvent(
+      BuildContext context, String docId) async {
+    await FirebaseFirestore.instance
+        .collection('events')
+        .doc(docId)
+        .delete();
+
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('🗑️ Event deleted successfully'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
@@ -105,7 +113,9 @@ class CampusEventsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () => addEvent(context),
+              onPressed: () {
+                addEvent(context);
+              },
               child: const Text('Add Event'),
             ),
 
@@ -119,8 +129,7 @@ class CampusEventsScreen extends StatelessWidget {
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(
-                      child: CircularProgressIndicator(),
-                    );
+                        child: CircularProgressIndicator());
                   }
 
                   final events = snapshot.data!.docs;
@@ -138,67 +147,94 @@ class CampusEventsScreen extends StatelessWidget {
                         child: ListTile(
                           title: Text(
                             data['title'],
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold),
                           ),
                           subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
                             children: [
                               Text(data['description']),
                               Text("📅 Date: ${data['date']}"),
-                              Text("📍 Location: ${data['location']}"),
+                              Text(
+                                  "📍 Location: ${data['location']}"),
                             ],
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // UPDATE BUTTON (FIXED)
+                              // UPDATE
                               IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blue),
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.blue),
                                 onPressed: () {
-                                  titleController.text = data['title'];
-                                  descController.text = data['description'];
-                                  dateController.text = data['date'];
-                                  locationController.text = data['location'];
+                                  titleController.text =
+                                      data['title'];
+                                  descController.text =
+                                      data['description'];
+                                  dateController.text =
+                                      data['date'];
+                                  locationController.text =
+                                      data['location'];
 
                                   showDialog(
                                     context: context,
                                     builder: (_) => AlertDialog(
-                                      title: const Text('Update Event'),
+                                      title:
+                                          const Text('Update Event'),
                                       content: Column(
-                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisSize:
+                                            MainAxisSize.min,
                                         children: [
                                           TextField(
-                                            controller: titleController,
-                                            decoration: const InputDecoration(
-                                                labelText: 'Event Title'),
+                                            controller:
+                                                titleController,
+                                            decoration:
+                                                const InputDecoration(
+                                                    labelText:
+                                                        'Event Title'),
                                           ),
                                           TextField(
-                                            controller: descController,
-                                            decoration: const InputDecoration(
-                                                labelText: 'Description'),
+                                            controller:
+                                                descController,
+                                            decoration:
+                                                const InputDecoration(
+                                                    labelText:
+                                                        'Description'),
                                           ),
                                           TextField(
-                                            controller: dateController,
-                                            decoration: const InputDecoration(
-                                                labelText: 'Date'),
+                                            controller:
+                                                dateController,
+                                            decoration:
+                                                const InputDecoration(
+                                                    labelText:
+                                                        'Date'),
                                           ),
                                           TextField(
-                                            controller: locationController,
-                                            decoration: const InputDecoration(
-                                                labelText: 'Location'),
+                                            controller:
+                                                locationController,
+                                            decoration:
+                                                const InputDecoration(
+                                                    labelText:
+                                                        'Location'),
                                           ),
                                         ],
                                       ),
                                       actions: [
                                         TextButton(
                                           onPressed: () =>
-                                              Navigator.pop(context),
-                                          child: const Text('Cancel'),
+                                              Navigator.pop(
+                                                  context),
+                                          child:
+                                              const Text('Cancel'),
                                         ),
                                         ElevatedButton(
-                                          onPressed: () => updateEvent(
-                                              context, data.id),
-                                          child: const Text('Update'),
+                                          onPressed: () =>
+                                              updateEvent(
+                                                  context,
+                                                  data.id),
+                                          child:
+                                              const Text('Update'),
                                         ),
                                       ],
                                     ),
@@ -206,11 +242,38 @@ class CampusEventsScreen extends StatelessWidget {
                                 },
                               ),
 
-                              // DELETE BUTTON
+                              // DELETE (CONFIRMATION ADDED)
                               IconButton(
-                                icon:
-                                    const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => deleteEvent(data.id),
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.red),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title:
+                                          const Text('Delete Event'),
+                                      content: const Text(
+                                          'Are you sure you want to delete this event?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(
+                                                  context),
+                                          child:
+                                              const Text('Cancel'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              deleteEvent(
+                                                  context,
+                                                  data.id),
+                                          child:
+                                              const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
