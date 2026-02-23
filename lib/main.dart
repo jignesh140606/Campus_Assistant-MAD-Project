@@ -22,15 +22,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Campus Assistant',
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return const MainScreen(); // ✅ Logged in
-          }
-          return const LoginScreen(); // ❌ Not logged in
-        },
-      ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return const MainScreen(); // ✅ Logged in
+            }
+            return const LoginScreen(); // ❌ Not logged in
+          },
+        ),
+        '/home': (context) => const MainScreen(),
+      },
     );
   }
 }

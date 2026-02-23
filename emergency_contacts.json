@@ -1,0 +1,28 @@
+{
+  "emergency_contacts": [
+    {
+      "name": "Ambulance",
+      "phone": 102,
+      "description": "Emergency Medical Services",
+      "priority": 5
+    },
+    {
+      "name": "Mental Health Crisis",
+      "phone": 8888888888,
+      "description": "Mental Health Support Line",
+      "priority": 6
+    },
+    {
+      "name": "Campus Counseling",
+      "phone": 7777777777,
+      "description": "Student Counseling Services",
+      "priority": 7
+    },
+    {
+      "name": "Poison Control",
+      "phone": 6666666666,
+      "description": "Poison Emergency Control",
+      "priority": 8
+    }
+  ]
+}

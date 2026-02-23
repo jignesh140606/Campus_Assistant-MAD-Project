@@ -1,16 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
-class CampusEventsScreen extends StatelessWidget {
-  CampusEventsScreen({super.key});
+class CampusEventsScreen extends StatefulWidget {
+  const CampusEventsScreen({super.key});
 
+  @override
+  State<CampusEventsScreen> createState() => _CampusEventsScreenState();
+}
+
+class _CampusEventsScreenState extends State<CampusEventsScreen> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
+  DateTime? selectedDate;
 
   /* ---------------- CREATE ---------------- */
   Future<void> addEvent(BuildContext context) async {
+    if (titleController.text.isEmpty || dateController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Please fill in title and date'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     await FirebaseFirestore.instance.collection('events').add({
       'title': titleController.text,
       'description': descController.text,
@@ -30,6 +47,7 @@ class CampusEventsScreen extends StatelessWidget {
     descController.clear();
     dateController.clear();
     locationController.clear();
+    selectedDate = null;
   }
 
   /* ---------------- READ ---------------- */
@@ -43,6 +61,16 @@ class CampusEventsScreen extends StatelessWidget {
   /* ---------------- UPDATE ---------------- */
   Future<void> updateEvent(
       BuildContext context, String docId) async {
+    if (titleController.text.isEmpty || dateController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Please fill in title and date'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     await FirebaseFirestore.instance
         .collection('events')
         .doc(docId)
@@ -66,6 +94,7 @@ class CampusEventsScreen extends StatelessWidget {
     descController.clear();
     dateController.clear();
     locationController.clear();
+    selectedDate = null;
   }
 
   /* ---------------- DELETE ---------------- */
@@ -86,6 +115,21 @@ class CampusEventsScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        dateController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,19 +141,41 @@ class CampusEventsScreen extends StatelessWidget {
             // -------- ADD EVENT FORM --------
             TextField(
               controller: titleController,
-              decoration: const InputDecoration(labelText: 'Event Title'),
+              decoration: const InputDecoration(
+                labelText: 'Event Title',
+                border: OutlineInputBorder(),
+              ),
             ),
+            const SizedBox(height: 10),
             TextField(
               controller: descController,
-              decoration: const InputDecoration(labelText: 'Description'),
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
             ),
+            const SizedBox(height: 10),
             TextField(
               controller: dateController,
-              decoration: const InputDecoration(labelText: 'Date'),
+              decoration: InputDecoration(
+                labelText: 'Date (dd/MM/yyyy)',
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.calendar_today),
+                  onPressed: () => _selectDate(context),
+                ),
+              ),
+              readOnly: true,
+              onTap: () => _selectDate(context),
             ),
+            const SizedBox(height: 10),
             TextField(
               controller: locationController,
-              decoration: const InputDecoration(labelText: 'Location'),
+              decoration: const InputDecoration(
+                labelText: 'Location',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 10),
             ElevatedButton(
@@ -154,10 +220,10 @@ class CampusEventsScreen extends StatelessWidget {
                             crossAxisAlignment:
                                 CrossAxisAlignment.start,
                             children: [
-                              Text(data['description']),
+                              Text(data['description'] ?? ''),
                               Text("📅 Date: ${data['date']}"),
                               Text(
-                                  "📍 Location: ${data['location']}"),
+                                  "📍 Location: ${data['location'] ?? 'N/A'}"),
                             ],
                           ),
                           trailing: Row(
@@ -171,54 +237,65 @@ class CampusEventsScreen extends StatelessWidget {
                                   titleController.text =
                                       data['title'];
                                   descController.text =
-                                      data['description'];
+                                      data['description'] ?? '';
                                   dateController.text =
                                       data['date'];
                                   locationController.text =
-                                      data['location'];
+                                      data['location'] ?? '';
 
                                   showDialog(
                                     context: context,
                                     builder: (_) => AlertDialog(
                                       title:
                                           const Text('Update Event'),
-                                      content: Column(
-                                        mainAxisSize:
-                                            MainAxisSize.min,
-                                        children: [
-                                          TextField(
-                                            controller:
-                                                titleController,
-                                            decoration:
-                                                const InputDecoration(
-                                                    labelText:
-                                                        'Event Title'),
-                                          ),
-                                          TextField(
-                                            controller:
-                                                descController,
-                                            decoration:
-                                                const InputDecoration(
-                                                    labelText:
-                                                        'Description'),
-                                          ),
-                                          TextField(
-                                            controller:
-                                                dateController,
-                                            decoration:
-                                                const InputDecoration(
-                                                    labelText:
-                                                        'Date'),
-                                          ),
-                                          TextField(
-                                            controller:
-                                                locationController,
-                                            decoration:
-                                                const InputDecoration(
-                                                    labelText:
-                                                        'Location'),
-                                          ),
-                                        ],
+                                      content: SingleChildScrollView(
+                                        child: Column(
+                                          mainAxisSize:
+                                              MainAxisSize.min,
+                                          children: [
+                                            TextField(
+                                              controller:
+                                                  titleController,
+                                              decoration:
+                                                  const InputDecoration(
+                                                      labelText:
+                                                          'Event Title'),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            TextField(
+                                              controller:
+                                                  descController,
+                                              decoration:
+                                                  const InputDecoration(
+                                                      labelText:
+                                                          'Description'),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            TextField(
+                                              controller:
+                                                  dateController,
+                                              decoration: InputDecoration(
+                                                labelText: 'Date',
+                                                suffixIcon: IconButton(
+                                                  icon: const Icon(Icons
+                                                      .calendar_today),
+                                                  onPressed: () =>
+                                                      _selectDate(_),
+                                                ),
+                                              ),
+                                              readOnly: true,
+                                            ),
+                                            const SizedBox(height: 10),
+                                            TextField(
+                                              controller:
+                                                  locationController,
+                                              decoration:
+                                                  const InputDecoration(
+                                                      labelText:
+                                                          'Location'),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                       actions: [
                                         TextButton(

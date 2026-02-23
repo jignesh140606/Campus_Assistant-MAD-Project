@@ -56,6 +56,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     email: email.text.trim(),
                     password: password.text.trim(),
                   );
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Login successful!'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  // Navigate to MainScreen and remove login screen from stack
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    if (mounted) {
+                      Navigator.pushReplacementNamed(context, '/home');
+                    }
+                  });
                 } on FirebaseAuthException catch (e) {
                   setState(() {
                     if (e.code == 'user-not-found') {
