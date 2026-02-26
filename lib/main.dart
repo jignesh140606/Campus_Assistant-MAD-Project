@@ -82,15 +82,16 @@ class _RoleRouter extends StatelessWidget {
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final role = data['role'] as String? ?? 'student';
+        // Both students AND admins must be approved before accessing the app.
+        // status absent on legacy accounts → treat as approved.
+        final status = data['status'] as String?;
+
+        if (status == 'pending') {
+          return const PendingApprovalScreen();
+        }
 
         if (role == 'admin') {
           return const AdminMainScreen();
-        }
-        // Students must be approved before accessing the app.
-        // If status field is absent (legacy account) → treat as approved.
-        final status = data['status'] as String?;
-        if (status == 'pending') {
-          return const PendingApprovalScreen();
         }
         return const MainScreen();
       },

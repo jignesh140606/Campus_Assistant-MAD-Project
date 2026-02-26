@@ -204,8 +204,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'name': name,
         'email': email,
         'role': _role,
-        // Students start as 'pending', admins are always 'approved'
-        'status': _role == 'student' ? 'pending' : 'approved',
+        // ALL new accounts (student AND admin) start as 'pending'.
+        // An existing approved admin must approve them before they can access the app.
+        'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
       };
       if (_role == 'student') {
@@ -218,7 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final message = _role == 'student'
           ? 'Registration successful! Please wait for admin approval.'
-          : 'Admin account created! Please login.';
+          : 'Admin account registered! An existing admin must approve your account before you can access the admin panel.';
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

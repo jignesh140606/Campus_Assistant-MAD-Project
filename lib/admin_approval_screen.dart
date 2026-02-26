@@ -7,22 +7,24 @@ class AdminApprovalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Student Approvals'),
+          title: const Text('Approvals'),
           centerTitle: true,
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Pending'),
-              Tab(text: 'Approved'),
+              Tab(text: 'Students Pending'),
+              Tab(text: 'Students Approved'),
+              Tab(text: 'Admin Requests'),
             ],
           ),
         ),
         body: const TabBarView(
           children: [
-            _StudentList(status: 'pending'),
-            _StudentList(status: 'approved'),
+            _UserList(role: 'student', status: 'pending'),
+            _UserList(role: 'student', status: 'approved'),
+            _UserList(role: 'admin',   status: 'pending'),
           ],
         ),
       ),
@@ -30,17 +32,18 @@ class AdminApprovalScreen extends StatelessWidget {
   }
 }
 
-// ── Reusable list for pending / approved ──────────────────────
-class _StudentList extends StatelessWidget {
+// ── Reusable list for any role + status ───────────────────────
+class _UserList extends StatelessWidget {
+  final String role;
   final String status;
-  const _StudentList({required this.status});
+  const _UserList({required this.role, required this.status});
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
-          .where('role', isEqualTo: 'student')
+          .where('role', isEqualTo: role)
           .where('status', isEqualTo: status)
           .orderBy('createdAt', descending: true)
           .snapshots(),
@@ -53,6 +56,7 @@ class _StudentList extends StatelessWidget {
         }
 
         final docs = snapshot.data?.docs ?? [];
+        final isAdmin = role == 'admin';
 
         if (docs.isEmpty) {
           return Center(
@@ -69,8 +73,8 @@ class _StudentList extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   status == 'pending'
-                      ? 'No pending approvals'
-                      : 'No approved students yet',
+                      ? (isAdmin ? 'No pending admin requests' : 'No pending approvals')
+                      : (isAdmin ? 'No approved admins yet' : 'No approved students yet'),
                   style: TextStyle(color: Colors.grey[600], fontSize: 16),
                 ),
               ],
@@ -89,6 +93,7 @@ class _StudentList extends StatelessWidget {
               docId: doc.id,
               data: data,
               status: status,
+              isAdminCard: role == 'admin',
             );
           },
         );
@@ -97,20 +102,34 @@ class _StudentList extends StatelessWidget {
   }
 }
 
-// ── Individual student card ───────────────────────────────────
+// ── Individual user card (student or admin) ──────────────────
 class _StudentCard extends StatelessWidget {
   final String docId;
   final Map<String, dynamic> data;
   final String status;
+  final bool isAdminCard;
 
-  const _StudentCard(
-      {required this.docId, required this.data, required this.status});
+  const _StudentCard({
+    required this.docId,
+    required this.data,
+    required this.status,
+    this.isAdminCard = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final name = data['name'] as String? ?? 'Unknown';
     final email = data['email'] as String? ?? '';
     final semester = data['semester'] as int?;
+
+    // Badge color: admin = indigo, student = blue/green
+    final badgeColor = isAdminCard ? Colors.indigo : Colors.blue;
+    final avatarColor = status == 'pending'
+        ? (isAdminCard ? Colors.indigo[100]! : Colors.orange[100]!)
+        : Colors.green[100]!;
+    final avatarIconColor = status == 'pending'
+        ? (isAdminCard ? Colors.indigo : Colors.orange)
+        : Colors.green;
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -122,12 +141,10 @@ class _StudentCard extends StatelessWidget {
             // Avatar
             CircleAvatar(
               radius: 24,
-              backgroundColor: status == 'pending'
-                  ? Colors.orange[100]
-                  : Colors.green[100],
+              backgroundColor: avatarColor,
               child: Icon(
-                Icons.person,
-                color: status == 'pending' ? Colors.orange : Colors.green,
+                isAdminCard ? Icons.admin_panel_settings : Icons.person,
+                color: avatarIconColor,
               ),
             ),
             const SizedBox(width: 14),
@@ -137,14 +154,37 @@ class _StudentCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15)),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: badgeColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: badgeColor.withValues(alpha: 0.4)),
+                        ),
+                        child: Text(
+                          isAdminCard ? 'Admin' : 'Student',
+                          style: TextStyle(
+                              color: badgeColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 2),
                   Text(email,
                       style: TextStyle(
                           color: Colors.grey[600], fontSize: 12)),
-                  if (semester != null)
+                  if (!isAdminCard && semester != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Container(
@@ -183,7 +223,7 @@ class _StudentCard extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.cancel_outlined,
                         color: Colors.red, size: 28),
-                    tooltip: 'Reject',
+                    tooltip: isAdminCard ? 'Reject Admin' : 'Reject',
                     onPressed: () =>
                         _confirmReject(context, docId, name),
                   ),
@@ -211,11 +251,12 @@ class _StudentCard extends StatelessWidget {
         .update({'status': newStatus});
 
     if (context.mounted) {
+      final label = isAdminCard ? 'Admin' : 'Student';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(newStatus == 'approved'
-              ? 'Student approved successfully!'
-              : 'Student moved back to pending'),
+              ? '$label approved successfully!'
+              : '$label moved back to pending'),
           backgroundColor:
               newStatus == 'approved' ? Colors.green : Colors.orange,
           duration: const Duration(seconds: 2),
@@ -226,10 +267,11 @@ class _StudentCard extends StatelessWidget {
 
   Future<void> _confirmReject(
       BuildContext context, String id, String name) async {
+    final label = isAdminCard ? 'Admin' : 'Student';
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reject Student'),
+        title: Text('Reject $label'),
         content: Text(
             'Are you sure you want to reject "$name"?\n\nThis will delete their account permanently.'),
         actions: [
@@ -250,10 +292,10 @@ class _StudentCard extends StatelessWidget {
       await FirebaseFirestore.instance.collection('users').doc(id).delete();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Student rejected and removed.'),
+          SnackBar(
+            content: Text('$label rejected and removed.'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       }

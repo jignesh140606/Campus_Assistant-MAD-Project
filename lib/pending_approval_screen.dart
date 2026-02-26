@@ -21,9 +21,11 @@ class PendingApprovalScreen extends StatelessWidget {
           builder: (context, snapshot) {
             final data =
                 snapshot.data?.data() as Map<String, dynamic>?;
+            final role = data?['role'] as String? ?? 'student';
+            final isAdmin = role == 'admin';
 
           /// When status changes to 'approved', the StreamBuilder in
-          /// main.dart (_RoleRouter) automatically re-routes to MainScreen.
+          /// main.dart (_RoleRouter) automatically re-routes to the right screen.
           /// No manual navigation needed here.
 
             return Center(
@@ -40,22 +42,29 @@ class PendingApprovalScreen extends StatelessWidget {
                       builder: (ctx, scale, child) =>
                           Transform.scale(scale: scale, child: child),
                       child: Icon(
-                        Icons.hourglass_top_rounded,
+                        isAdmin
+                            ? Icons.admin_panel_settings_outlined
+                            : Icons.hourglass_top_rounded,
                         size: 90,
-                        color: Colors.orange[400],
+                        color: isAdmin ? Colors.indigo[400] : Colors.orange[400],
                       ),
                     ),
                     const SizedBox(height: 28),
-                    const Text(
-                      'Awaiting Admin Approval',
-                      style: TextStyle(
+                    Text(
+                      isAdmin
+                          ? 'Admin Approval Pending'
+                          : 'Awaiting Admin Approval',
+                      style: const TextStyle(
                           fontSize: 22, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Your account has been registered successfully.\n'
-                      'Please wait for the admin to approve your account before you can access the app.',
+                      isAdmin
+                          ? 'Your admin account has been registered.\n'
+                            'An existing admin must approve your request before you can access the admin panel.'
+                          : 'Your account has been registered successfully.\n'
+                            'Please wait for the admin to approve your account before you can access the app.',
                       style: TextStyle(
                           fontSize: 14, color: Colors.grey[600]),
                       textAlign: TextAlign.center,
@@ -74,13 +83,20 @@ class PendingApprovalScreen extends StatelessWidget {
                             const Divider(height: 20),
                             _infoRow(Icons.email_outlined, 'Email',
                                 user?.email ?? ''),
+                            if (!isAdmin) ...[
+                              const Divider(height: 20),
+                              _infoRow(
+                                  Icons.school_outlined,
+                                  'Semester',
+                                  data?['semester'] != null
+                                      ? 'Semester ${data!['semester']}'
+                                      : '—'),
+                            ],
                             const Divider(height: 20),
                             _infoRow(
-                                Icons.school_outlined,
-                                'Semester',
-                                data?['semester'] != null
-                                    ? 'Semester ${data!['semester']}'
-                                    : '—'),
+                                Icons.badge_outlined,
+                                'Role',
+                                isAdmin ? 'Admin' : 'Student'),
                           ],
                         ),
                       ),
