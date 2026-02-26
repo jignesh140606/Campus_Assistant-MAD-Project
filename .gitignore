@@ -44,6 +44,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Node / JS dependencies — NEVER commit these
+node_modules/
+
 # Firebase / Google credentials — NEVER commit these
 *firebase-adminsdk*.json
 google-services.json
