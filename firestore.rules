@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ────────────────────────────────────────
+
+    // Returns the calling user's Firestore profile document data.
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // True if the caller is authenticated.
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // True if the caller has role == "admin" in their Firestore profile.
+    function isAdmin() {
+      return isAuth() && getUserData().role == 'admin';
+    }
+
+    // ── users collection ───────────────────────────────────────
+    // • Any authenticated user can read & write their own document (profile).
+    // • Admins can read and update ALL user documents (for approvals/stats).
+    // • Only admins can delete a user document (reject action).
+    match /users/{userId} {
+      allow read:   if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuth() && request.auth.uid == userId;
+      allow update: if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ── today_classes collection ───────────────────────────────
+    // • Admins can create, update, delete class entries.
+    // • Any authenticated user can read.
+    match /today_classes/{classId} {
+      allow read:   if isAuth();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── events collection ──────────────────────────────────────
+    // • Any authenticated user can read events.
+    // • Any authenticated user can create/update/delete events
+    //   (Campus Events & Reminders screens allow all users to manage events).
+    match /events/{eventId} {
+      allow read:   if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth();
+      allow delete: if isAuth();
+    }
+
+    // ── emergency_contacts collection ──────────────────────────
+    // • Any authenticated user can read emergency contacts.
+    // • Only admins can create/update/delete contacts.
+    match /emergency_contacts/{contactId} {
+      allow read:   if isAuth();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── reminders collection (if used separately) ──────────────
+    match /reminders/{reminderId} {
+      allow read:   if isAuth() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if isAuth() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuth() && request.auth.uid == resource.data.userId;
+      allow delete: if isAuth() && request.auth.uid == resource.data.userId;
+    }
+  }
+}

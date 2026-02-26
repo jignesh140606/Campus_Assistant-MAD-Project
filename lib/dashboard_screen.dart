@@ -3,6 +3,7 @@ import 'campus_events_screen.dart';
 import 'emergency_info_screen.dart';
 import 'academic_calendar_screen.dart';
 import 'reminders_screen.dart';
+import 'todays_classes_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -16,7 +17,19 @@ class DashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         children: [
           const Card(child: Center(child: Text('Student Dashboard'))),
-          const Card(child: Center(child: Text("Today's Classes"))),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TodaysClassesScreen(),
+                ),
+              );
+            },
+            child: const Card(
+              child: Center(child: Text("Today's Classes")),
+            ),
+          ),
           GestureDetector(
             onTap: () {
               Navigator.push(
