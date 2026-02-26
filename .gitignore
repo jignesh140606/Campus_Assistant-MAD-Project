@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase / Google credentials — NEVER commit these
+*firebase-adminsdk*.json
+google-services.json
+GoogleService-Info.plist
