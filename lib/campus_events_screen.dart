@@ -14,7 +14,9 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
   final TextEditingController descController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
+  final TextEditingController timeController = TextEditingController();
   DateTime? selectedDate;
+  TimeOfDay? selectedTime;
 
   /* ---------------- CREATE ---------------- */
   Future<void> addEvent(BuildContext context) async {
@@ -33,6 +35,7 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
       'description': descController.text,
       'date': dateController.text,
       'location': locationController.text,
+      'eventTime': timeController.text,
       'createdAt': Timestamp.now(),
     });
 
@@ -47,7 +50,9 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
     descController.clear();
     dateController.clear();
     locationController.clear();
+    timeController.clear();
     selectedDate = null;
+    selectedTime = null;
   }
 
   /* ---------------- READ ---------------- */
@@ -79,6 +84,7 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
       'description': descController.text,
       'date': dateController.text,
       'location': locationController.text,
+      'eventTime': timeController.text,
     });
 
     Navigator.pop(context);
@@ -94,7 +100,9 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
     descController.clear();
     dateController.clear();
     locationController.clear();
+    timeController.clear();
     selectedDate = null;
+    selectedTime = null;
   }
 
   /* ---------------- DELETE ---------------- */
@@ -130,64 +138,125 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
     }
   }
 
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: selectedTime ?? TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        selectedTime = picked;
+        final h = picked.hour.toString().padLeft(2, '0');
+        final m = picked.minute.toString().padLeft(2, '0');
+        timeController.text = '$h:$m';
+      });
+    }
+  }
+
+  void _showAddEventDialog(BuildContext context) {
+    titleController.clear();
+    descController.clear();
+    dateController.clear();
+    locationController.clear();
+    timeController.clear();
+    selectedDate = null;
+    selectedTime = null;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Event'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Event Title',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: descController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: dateController,
+                decoration: InputDecoration(
+                  labelText: 'Date (dd/MM/yyyy)',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () => _selectDate(context),
+                  ),
+                ),
+                readOnly: true,
+                onTap: () => _selectDate(context),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: locationController,
+                decoration: const InputDecoration(
+                  labelText: 'Location',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: timeController,
+                decoration: InputDecoration(
+                  labelText: 'Event Time (optional – for 1-hour reminder)',
+                  hintText: 'e.g. 10:30 AM',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.access_time),
+                    onPressed: () => _selectTime(context),
+                  ),
+                ),
+                readOnly: true,
+                onTap: () => _selectTime(context),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await addEvent(context);
+            },
+            child: const Text('Add Event'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Campus Events')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddEventDialog(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Event'),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // -------- ADD EVENT FORM --------
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Event Title',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: dateController,
-              decoration: InputDecoration(
-                labelText: 'Date (dd/MM/yyyy)',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.calendar_today),
-                  onPressed: () => _selectDate(context),
-                ),
-              ),
-              readOnly: true,
-              onTap: () => _selectDate(context),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: locationController,
-              decoration: const InputDecoration(
-                labelText: 'Location',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                addEvent(context);
-              },
-              child: const Text('Add Event'),
-            ),
-
-            const SizedBox(height: 20),
-            const Divider(),
-
             // -------- READ EVENTS LIST --------
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -242,57 +311,61 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
                                       data['date'];
                                   locationController.text =
                                       data['location'] ?? '';
+                                  timeController.text =
+                                      data['eventTime'] ?? '';
 
                                   showDialog(
                                     context: context,
-                                    builder: (_) => AlertDialog(
-                                      title:
-                                          const Text('Update Event'),
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text('Update Event'),
                                       content: SingleChildScrollView(
                                         child: Column(
-                                          mainAxisSize:
-                                              MainAxisSize.min,
+                                          mainAxisSize: MainAxisSize.min,
                                           children: [
                                             TextField(
-                                              controller:
-                                                  titleController,
-                                              decoration:
-                                                  const InputDecoration(
-                                                      labelText:
-                                                          'Event Title'),
+                                              controller: titleController,
+                                              decoration: const InputDecoration(
+                                                  labelText: 'Event Title'),
                                             ),
                                             const SizedBox(height: 10),
                                             TextField(
-                                              controller:
-                                                  descController,
-                                              decoration:
-                                                  const InputDecoration(
-                                                      labelText:
-                                                          'Description'),
+                                              controller: descController,
+                                              decoration: const InputDecoration(
+                                                  labelText: 'Description'),
                                             ),
                                             const SizedBox(height: 10),
                                             TextField(
-                                              controller:
-                                                  dateController,
+                                              controller: dateController,
                                               decoration: InputDecoration(
                                                 labelText: 'Date',
                                                 suffixIcon: IconButton(
-                                                  icon: const Icon(Icons
-                                                      .calendar_today),
+                                                  icon: const Icon(
+                                                      Icons.calendar_today),
                                                   onPressed: () =>
-                                                      _selectDate(_),
+                                                      _selectDate(context),
                                                 ),
                                               ),
                                               readOnly: true,
                                             ),
                                             const SizedBox(height: 10),
                                             TextField(
-                                              controller:
-                                                  locationController,
-                                              decoration:
-                                                  const InputDecoration(
-                                                      labelText:
-                                                          'Location'),
+                                              controller: locationController,
+                                              decoration: const InputDecoration(
+                                                  labelText: 'Location'),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            TextField(
+                                              controller: timeController,
+                                              decoration: InputDecoration(
+                                                labelText: 'Event Time (optional)',
+                                                suffixIcon: IconButton(
+                                                  icon: const Icon(
+                                                      Icons.access_time),
+                                                  onPressed: () =>
+                                                      _selectTime(context),
+                                                ),
+                                              ),
+                                              readOnly: true,
                                             ),
                                           ],
                                         ),
@@ -300,18 +373,13 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
                                       actions: [
                                         TextButton(
                                           onPressed: () =>
-                                              Navigator.pop(
-                                                  context),
-                                          child:
-                                              const Text('Cancel'),
+                                              Navigator.pop(ctx),
+                                          child: const Text('Cancel'),
                                         ),
                                         ElevatedButton(
                                           onPressed: () =>
-                                              updateEvent(
-                                                  context,
-                                                  data.id),
-                                          child:
-                                              const Text('Update'),
+                                              updateEvent(context, data.id),
+                                          child: const Text('Update'),
                                         ),
                                       ],
                                     ),

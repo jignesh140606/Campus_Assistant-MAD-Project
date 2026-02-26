@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'campus_events_screen.dart';
 import 'emergency_info_screen.dart';
 import 'academic_calendar_screen.dart';
+import 'reminders_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -29,7 +30,19 @@ class DashboardScreen extends StatelessWidget {
               child: Center(child: Text('Academic Calendar')),
             ),
           ),
-          const Card(child: Center(child: Text('Reminders'))),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RemindersScreen(),
+                ),
+              );
+            },
+            child: const Card(
+              child: Center(child: Text('Reminders')),
+            ),
+          ),
 
           GestureDetector(
             onTap: () {

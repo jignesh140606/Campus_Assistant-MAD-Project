@@ -171,7 +171,7 @@ class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
                   print('Error processing contact $index: $e');
                   return const SizedBox.shrink();
                 }
-              }).toList(),
+              }),
 
               const SizedBox(height: 24),
 
@@ -241,7 +241,7 @@ class EmergencyContactTile extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onTap;
 
-  const EmergencyContactTile({
+  const EmergencyContactTile({super.key, 
     required this.name,
     required this.number,
     required this.description,
