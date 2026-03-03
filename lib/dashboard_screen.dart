@@ -7,6 +7,7 @@ import 'emergency_info_screen.dart';
 import 'academic_calendar_screen.dart';
 import 'reminders_screen.dart';
 import 'todays_classes_screen.dart';
+import 'news_feed_screen.dart';
 
 // Weekday → timetable day label (mirrors TodaysClassesScreen)
 const _kWeekdayLabel = {
@@ -523,6 +524,13 @@ class _QuickActionsRow extends StatelessWidget {
         color: Colors.red,
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const EmergencyInfoScreen())),
+      ),
+      _QuickAction(
+        icon: Icons.newspaper_outlined,
+        label: 'News Feed',
+        color: Colors.deepPurple,
+        onTap: () => Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const NewsFeedScreen())),
       ),
     ];
 
