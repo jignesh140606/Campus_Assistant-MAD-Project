@@ -9,12 +9,15 @@ import 'admin_main_screen.dart';
 import 'pending_approval_screen.dart';
 import 'profile_setup_screen.dart';
 import 'firebase_options.dart';
+import 'notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  // Initialise local notifications
+  await NotificationService.instance.init();
   runApp(const MyApp());
 }
 

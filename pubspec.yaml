@@ -15,6 +15,10 @@ dependencies:
   firebase_auth: ^5.7.0
   cloud_firestore: ^5.0.0
 
+  # Notifications (local – Android/iOS only)
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+
   # Local storage
   shared_preferences: ^2.2.2
 
@@ -26,6 +30,13 @@ dependencies:
 
   # Calendar widget
   table_calendar: ^3.0.9
+
+  # Lab 11 – Option D: Data Visualization
+  fl_chart: ^0.68.0
+
+  # Lab 11 – Option B: Image / Media Upload
+  image_picker: ^1.1.2
+  firebase_storage: ^12.3.6
 
 dev_dependencies:
   flutter_test:

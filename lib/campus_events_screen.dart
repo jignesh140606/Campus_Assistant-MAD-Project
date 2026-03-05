@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'notification_service.dart';
 
 class CampusEventsScreen extends StatefulWidget {
   const CampusEventsScreen({super.key});
@@ -38,6 +39,14 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
       'eventTime': timeController.text,
       'createdAt': Timestamp.now(),
     });
+
+    // Notify: new event added
+    NotificationService.instance.showNotification(
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: '📅 New Event Added',
+      body: '${titleController.text} on ${dateController.text}'
+          '${locationController.text.isNotEmpty ? " @ ${locationController.text}" : ""}',
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

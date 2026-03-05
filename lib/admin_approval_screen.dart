@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'notification_service.dart';
 
 class AdminApprovalScreen extends StatelessWidget {
   const AdminApprovalScreen({super.key});
@@ -249,6 +250,17 @@ class _StudentCard extends StatelessWidget {
         .collection('users')
         .doc(id)
         .update({'status': newStatus});
+
+    // Notify admin device when a user is approved
+    if (newStatus == 'approved') {
+      final label = isAdminCard ? 'Admin' : 'Student';
+      final name  = data['name'] as String? ?? 'User';
+      NotificationService.instance.showNotification(
+        id: id.hashCode,
+        title: '✅ $label Approved',
+        body: '"$name" has been approved successfully.',
+      );
+    }
 
     if (context.mounted) {
       final label = isAdminCard ? 'Admin' : 'Student';

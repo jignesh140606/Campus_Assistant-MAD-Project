@@ -2,6 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'notification_service.dart';
 
 // Maps Dart weekday (1=Mon â€¦ 7=Sun) â†’ timetable day label
 const _kWeekdayLabel = {
@@ -47,10 +48,52 @@ class _TodaysClassesScreenState extends State<TodaysClassesScreen> {
         .doc(uid)
         .get();
     if (mounted) {
+      final semester = doc.data()?['semester'] as int?;
       setState(() {
-        _userSemester = doc.data()?['semester'] as int?;
+        _userSemester = semester;
         _loadingProfile = false;
       });
+      // Schedule 30-min-ahead notifications for today's classes
+      final day = _kWeekdayLabel[DateTime.now().weekday];
+      if (semester != null && day != null) {
+        _scheduleClassNotifications(semester, day);
+      }
+    }
+  }
+
+  /// Schedules a local notification 30 minutes before each class today.
+  Future<void> _scheduleClassNotifications(int semester, String day) async {
+    final snap = await FirebaseFirestore.instance
+        .collection('today_classes')
+        .where('semester', isEqualTo: semester)
+        .where('day', isEqualTo: day)
+        .get();
+
+    int notifId = 200;
+    final now = DateTime.now();
+
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final timeStart = (data['timeStart'] as String?) ?? '';
+      final subject   = (data['subject']   as String?) ?? 'Class';
+      final room      = (data['room']      as String?) ?? '';
+
+      if (timeStart.isEmpty) continue;
+      try {
+        final parts = timeStart.split(':');
+        if (parts.length != 2) continue;
+        final h = int.parse(parts[0]);
+        final m = int.parse(parts[1]);
+        final classTime  = DateTime(now.year, now.month, now.day, h, m);
+        final notifTime  = classTime.subtract(const Duration(minutes: 30));
+
+        await NotificationService.instance.scheduleNotification(
+          id: notifId++,
+          title: '📚 Class in 30 minutes',
+          body: '$subject${room.isNotEmpty ? " • Room $room" : ""}',
+          scheduledDate: notifTime,
+        );
+      } catch (_) {}
     }
   }
 

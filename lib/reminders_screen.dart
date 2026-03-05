@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'notification_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTO-DELETE HELPER
@@ -162,6 +163,8 @@ class RemindersScreen extends StatefulWidget {
 class _RemindersScreenState extends State<RemindersScreen> {
   Timer? _ticker;
   DateTime _now = DateTime.now();
+  // Track IDs we've already notified to avoid repeated alerts
+  final Set<String> _notifiedIds = {};
 
   @override
   void initState() {
@@ -263,6 +266,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
             ..sort((a, b) =>
                 b.eventDateTime.compareTo(a.eventDateTime));
 
+          // Fire a notification for each new "starting soon" event
+          _fireStartingSoonNotifications(startingSoon);
+
           return ListView(
             padding: const EdgeInsets.all(14),
             children: [
@@ -297,6 +303,22 @@ class _RemindersScreenState extends State<RemindersScreen> {
         },
       ),
     );
+  }
+
+  // ── STARTING SOON NOTIFICATIONS ──────────────────────────────────────────
+  void _fireStartingSoonNotifications(List<ReminderItem> startingSoon) {
+    for (final item in startingSoon) {
+      if (_notifiedIds.contains(item.id)) continue; // already notified
+      _notifiedIds.add(item.id);
+      final mins = item.timeLeft?.inMinutes ?? 0;
+      final timeLabel = mins <= 0 ? 'now' : 'in $mins min${mins == 1 ? '' : 's'}';
+      NotificationService.instance.showNotification(
+        id: item.id.hashCode,
+        title: '🔔 Starting Soon: ${item.title}',
+        body: 'Starts $timeLabel'
+            '${item.location.isNotEmpty ? " @ ${item.location}" : ""}',
+      );
+    }
   }
 
   // ── ALERT BANNER ─────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'home_screen.dart';
 import 'dashboard_screen.dart';
+import 'stats_screen.dart';
 import 'profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     DashboardScreen(),
+    StatsScreen(),
     ProfileScreen(),
   ];
 
@@ -29,6 +31,12 @@ class _MainScreenState extends State<MainScreen> {
         onTap: (value) {
           setState(() => _index = value);
         },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.indigo,
+        unselectedItemColor: Colors.grey,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+        elevation: 12,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -37,6 +45,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Stats',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

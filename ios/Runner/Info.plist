@@ -41,6 +41,13 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Lab 11 – Option B: Camera & Photo Library permissions -->
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is needed to take a profile photo</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo library access is needed to select a profile photo</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Photo library access is needed to save a profile photo</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
