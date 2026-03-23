@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'models/post_model.dart';
+import 'notification_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API constant
@@ -25,6 +26,7 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
   List<Post> _posts = [];
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isFirstLoad = true; // Track if this is the first load
 
   // ----- lifecycle -----------------------------------------------------------
   @override
@@ -41,17 +43,36 @@ class _NewsFeedScreenState extends State<NewsFeedScreen> {
     });
 
     try {
-      final response = await http
-          .get(Uri.parse(_kApiUrl))
-          .timeout(const Duration(seconds: 15));
+      final response = await http.get(
+        Uri.parse(_kApiUrl),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = jsonDecode(response.body);
-        final posts = jsonData.map((e) => Post.fromJson(e)).toList();
+        // BUG05 FIX: limit to 20 posts to prevent laggy scroll on low-end
+        // devices; the API returns 100 items in one payload.
+        final posts = jsonData
+            .take(20)
+            .map((e) => Post.fromJson(e))
+            .toList();
         setState(() {
           _posts = posts;
           _isLoading = false;
         });
+
+        // Notify about new posts (only on manual refresh, not first load)
+        if (!_isFirstLoad && posts.isNotEmpty) {
+          NotificationService.instance.showNotification(
+            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            title: '📰 News Feed Updated',
+            body: 'Loaded ${posts.length} new posts',
+          );
+        }
+        _isFirstLoad = false;
       } else {
         setState(() {
           _errorMessage =

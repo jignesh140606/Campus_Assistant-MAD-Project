@@ -31,7 +31,7 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
       return;
     }
 
-    await FirebaseFirestore.instance.collection('events').add({
+    final docRef = await FirebaseFirestore.instance.collection('events').add({
       'title': titleController.text,
       'description': descController.text,
       'date': dateController.text,
@@ -40,13 +40,31 @@ class _CampusEventsScreenState extends State<CampusEventsScreen> {
       'createdAt': Timestamp.now(),
     });
 
-    // Notify: new event added
+    // Notify: new event added (instant notification)
     NotificationService.instance.showNotification(
       id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title: '📅 New Event Added',
       body: '${titleController.text} on ${dateController.text}'
           '${locationController.text.isNotEmpty ? " @ ${locationController.text}" : ""}',
     );
+
+    // Schedule reminder notifications if time is provided
+    if (timeController.text.isNotEmpty && selectedDate != null && selectedTime != null) {
+      final eventDateTime = DateTime(
+        selectedDate!.year,
+        selectedDate!.month,
+        selectedDate!.day,
+        selectedTime!.hour,
+        selectedTime!.minute,
+      );
+
+      await NotificationService.instance.scheduleEventNotifications(
+        eventId: docRef.id,
+        title: titleController.text,
+        eventTime: eventDateTime,
+        location: locationController.text,
+      );
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

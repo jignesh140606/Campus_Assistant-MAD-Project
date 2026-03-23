@@ -169,11 +169,11 @@ class _RemindersScreenState extends State<RemindersScreen> {
   @override
   void initState() {
     super.initState();
-    // Run auto-delete immediately on open
-    _autoDeleteExpiredEvents();
-    // Refresh every 30 seconds – re-check for expired events
+    // BUG03 FIX: removed _autoDeleteExpiredEvents() calls.
+    // Auto-deleting events from shared Firestore caused past events to
+    // permanently disappear for ALL users (admin + students).
+    // Past events are now filtered client-side in _parseEvent() instead.
     _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
-      _autoDeleteExpiredEvents();
       if (mounted) setState(() => _now = DateTime.now());
     });
   }

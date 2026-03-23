@@ -220,7 +220,9 @@ class _AdminTodayClassesScreenState extends State<AdminTodayClassesScreen>
                             initialTime: _parseTime(timeStart),
                           );
                           if (t != null) {
-                            setDlg(() => timeStart = t.format(ctx));
+                            // BUG02 FIX: store in 24h HH:mm format so
+                            // notification parser (int.parse) never throws
+                            setDlg(() => timeStart = _formatTime24h(t));
                           }
                         },
                         child: InputDecorator(
@@ -243,7 +245,8 @@ class _AdminTodayClassesScreenState extends State<AdminTodayClassesScreen>
                             initialTime: _parseTime(timeEnd),
                           );
                           if (t != null) {
-                            setDlg(() => timeEnd = t.format(ctx));
+                            // BUG02 FIX: store in 24h HH:mm format
+                            setDlg(() => timeEnd = _formatTime24h(t));
                           }
                         },
                         child: InputDecorator(
@@ -347,6 +350,10 @@ class _AdminTodayClassesScreenState extends State<AdminTodayClassesScreen>
     } catch (_) {
       return const TimeOfDay(hour: 9, minute: 10);
     }
+  }
+
+  String _formatTime24h(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }
 

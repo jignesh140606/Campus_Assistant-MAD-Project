@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'notification_service.dart';
 
 class EmergencyInfoScreen extends StatefulWidget {
   const EmergencyInfoScreen({super.key});
@@ -12,6 +13,31 @@ class EmergencyInfoScreen extends StatefulWidget {
 class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Set<int> expandedIndices = {};
+  bool _hasNotified = false; // Track if we've sent emergency notification
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for emergency contact changes and notify
+    _firestore.collection('emergency_contacts').snapshots().listen((snapshot) {
+      if (!_hasNotified && snapshot.docs.isNotEmpty) {
+        final highPriorityContacts = snapshot.docs.where((doc) {
+          final data = doc.data();
+          final priority = (data['priority'] as num?)?.toInt() ?? 999;
+          return priority <= 2; // High priority (1-2)
+        }).toList();
+
+        if (highPriorityContacts.isNotEmpty) {
+          NotificationService.instance.showNotification(
+            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            title: '🚨 Emergency Contacts Available',
+            body: '${highPriorityContacts.length} critical emergency contact(s) saved for you',
+          );
+          _hasNotified = true;
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +56,9 @@ class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
           }
 
           if (snapshot.hasError) {
-            print('Firestore Error: ${snapshot.error}');
+            // BUG04 FIX: replaced print() with debugPrint() – bare print()
+            // leaks internal error details in release builds.
+            debugPrint('Firestore Error: ${snapshot.error}');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -75,7 +103,7 @@ class _EmergencyInfoScreenState extends State<EmergencyInfoScreen> {
               }
             });
           } catch (e) {
-            print('Error sorting contacts: $e');
+            debugPrint('Error sorting contacts: $e'); // BUG04 FIX
           }
           
           final contacts = documents;
